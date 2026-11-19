@@ -1,0 +1,8 @@
+{
+  "name": "idus-button-box-dev",
+  "private": true,
+  "description": "Dev tools for Idus Button Box (fake OpenDeck host). Playwright and ImageMagick are expected on the system.",
+  "dependencies": {
+    "ws": "8.18.0"
+  }
+}

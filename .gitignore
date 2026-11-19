@@ -1,0 +1,7 @@
+dist/
+build/
+node_modules/
+dev/node_modules/
+.directory
+*.log
+__pycache__/

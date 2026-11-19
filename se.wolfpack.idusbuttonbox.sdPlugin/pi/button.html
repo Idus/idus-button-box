@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en" data-target="opendeck">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Button Box</title>
+<link rel="stylesheet" href="pi.css">
+<script src="pi.js"></script>
+</head>
+<body>
+<div class="layout">
+  <section class="about">
+    <span class="eyebrow" id="eyebrow">Idus Button Box · v1.0</span>
+    <div class="titlerow"><span class="tab">JOY</span><h1>Button Box</h1></div>
+    <p class="lede">This key presses a button on a virtual joystick, <b>Idus Button Box</b>. Bind it in the game like any joystick button — no keyboard shortcuts in the way.</p>
+    <div class="btnrow statusrow">
+      <span class="pill" id="state">○ Starting…</span>
+      <button class="btn" type="button" id="test">Test this button</button>
+    </div>
+    <p class="hint" id="testmsg" aria-live="polite"></p>
+  </section>
+
+  <div class="settings">
+    <section class="group">
+      <div class="head">Button</div>
+      <label>Joystick button
+        <select data-setting="button" id="button">
+          <option value="1">Button 1</option><option value="2">Button 2</option><option value="3">Button 3</option><option value="4">Button 4</option>
+          <option value="5">Button 5</option><option value="6">Button 6</option><option value="7">Button 7</option><option value="8">Button 8</option>
+          <option value="9">Button 9</option><option value="10">Button 10</option><option value="11">Button 11</option><option value="12">Button 12</option>
+          <option value="13">Button 13</option><option value="14">Button 14</option><option value="15">Button 15</option><option value="16">Button 16</option>
+          <option value="17">Button 17</option><option value="18">Button 18</option><option value="19">Button 19</option><option value="20">Button 20</option>
+          <option value="21">Button 21</option><option value="22">Button 22</option><option value="23">Button 23</option><option value="24">Button 24</option>
+          <option value="25">Button 25</option><option value="26">Button 26</option><option value="27">Button 27</option><option value="28">Button 28</option>
+          <option value="29">Button 29</option><option value="30">Button 30</option><option value="31">Button 31</option><option value="32">Button 32</option>
+        </select>
+      </label>
+      <label>When you press the key
+        <select data-setting="mode" data-default="hold">
+          <option value="hold">Hold — the button is down while you hold the key</option>
+          <option value="tap">Tap — a short press, however long you hold</option>
+        </select>
+      </label>
+      <label class="label-in">Label on the key
+        <input type="text" data-setting="label" maxlength="32" placeholder="e.g. GEAR or QUANTUM|DRIVE" spellcheck="false">
+      </label>
+      <p class="hint">Empty: a round button. <code>|</code> starts a second line.</p>
+    </section>
+
+    <section class="group">
+      <div class="head">In the game</div>
+      <div class="tip">Open the game's key bindings, pick the action and <b>press this key</b>. Star Citizen shows it as <code>js<span id="jsn">N</span>_button<span id="btnn">1</span></code>. Start OpenDeck <b>before</b> the game, so the joystick is there when the game looks.</div>
+      <div class="checks" id="checks"></div>
+    </section>
+  </div>
+</div>
+
+<section class="group fix" id="fix" hidden>
+  <div class="head">Let the plugin make the joystick</div>
+  <p class="hint" id="fixwhy"></p>
+  <div class="cmd"><pre id="fixcmd"></pre><button class="btn" type="button" data-copy-pre="fixcmd">Copy</button></div>
+  <p class="hint">Run it in a terminal (it asks for your password), then press <b>Try again</b>. The plugin never changes system settings itself. Steam's controller support usually allows this already.</p>
+  <button class="btn" type="button" id="retry">Try again</button>
+</section>
+
+<footer class="below" data-idus></footer>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const FIX = {
+    python: ["The joystick is made by a small Python script, and python3 was not found. On Arch/CachyOS:", "sudo pacman -S --needed python"],
+    access: ["Your user may not write to /dev/uinput, so the joystick cannot be made. This udev rule gives the person at the computer access to it, the same way Steam does for controllers:",
+      "echo 'KERNEL==\"uinput\", SUBSYSTEM==\"misc\", TAG+=\"uaccess\", OPTIONS+=\"static_node=uinput\"' | sudo tee /etc/udev/rules.d/60-idus-uinput.rules && sudo udevadm control --reload && sudo udevadm trigger --name-match=uinput"],
+    missing: ["The uinput kernel module is not loaded, so there is no /dev/uinput. This loads it now and at every start:",
+      "sudo modprobe uinput && echo uinput | sudo tee /etc/modules-load.d/uinput.conf"],
+  };
+  const ago = (ms) => ms < 1500 ? "just now" : ms < 90000 ? Math.round(ms / 1000) + " s ago" : Math.round(ms / 60000) + " min ago";
+  let lastInfo = null;
+
+  // The label is saved while you type (a moment after the last key), so the key updates at once
+  let t = null;
+  document.addEventListener("input", (e) => {
+    if (!e.target.matches || !e.target.matches('input[data-setting="label"]')) return;
+    clearTimeout(t); t = setTimeout(() => e.target.dispatchEvent(new Event("change")), 350);
+  });
+
+  $("test").addEventListener("click", () => {
+    if (!lastInfo || lastInfo.state !== "ready") {
+      $("testmsg").className = "hint error"; $("testmsg").textContent = "✗ The joystick is not ready — see below."; return;
+    }
+    PI.send({ cmd: "test" });
+    $("testmsg").className = "hint ok";
+    $("testmsg").textContent = "✓ Button " + $("button").value + " pressed for half a second — the key lit up; a game or jstest sees it too.";
+  });
+  $("retry").addEventListener("click", () => PI.send({ cmd: "retry" }));
+
+  // Mark numbers other keys use (two keys may share one on purpose)
+  function marks(used) {
+    for (const o of $("button").options) {
+      const c = used && used[o.value];
+      o.textContent = "Button " + o.value + (c ? (c > 1 ? " · also on " + c + " other keys" : " · also on another key") : "");
+    }
+  }
+
+  PI.onInfo((i) => {
+    lastInfo = i;
+    if (i.version) $("eyebrow").textContent = "Idus Button Box · v" + i.version + (i.build ? " · build " + i.build : "");
+    if (i.button && String(PI.settings.button || "") === "") $("button").value = String(i.button);
+    marks(i.used);
+    $("btnn").textContent = $("button").value;
+
+    const st = $("state");
+    if (i.state === "ready") { st.className = "pill ok"; st.textContent = "● Joystick ready" + (i.nodes && i.nodes.js && i.nodes.js !== "-" ? " · " + i.nodes.js : ""); }
+    else if (i.state === "error") { st.className = "pill errp"; st.textContent = "✗ No joystick"; }
+    else { st.className = "pill warnp"; st.textContent = "○ Starting…"; }
+
+    const UIN = { missing: "no /dev/uinput", access: "no access to /dev/uinput", python: "python3 is missing" };
+    const dev = i.state === "ready"
+      ? ["ok", "Idus Button Box · 32 buttons" + (i.nodes && i.nodes.event && i.nodes.event !== "-" ? " · " + i.nodes.event : "")]
+      : i.state === "error" ? ["error", i.text || "stopped"] : ["warn", "starting"];
+    const acc = i.uinput === "ok" ? ["ok", "/dev/uinput writable"] : ["error", UIN[i.uinput] || i.uinput];
+    const lp = i.last ? ["ok", "button " + i.last.n + " · " + ago(i.last.ago) + (i.down && i.down.length ? " · held: " + i.down.join(", ") : "")] : ["warn", "none yet"];
+    $("checks").innerHTML = [["Joystick", dev], ["Access", acc], ["Last press", lp]].map(([k, [c, t]]) =>
+      `<div class="checkrow"><span class="dot ${c}">●</span><span class="ck">${k}</span><span class="cv" title="${t}">${t}</span></div>`).join("");
+
+    // One-line fixes (the plugin never changes system settings itself)
+    const fix = FIX[i.uinput] || (i.state === "error" ? FIX[i.kind] : null);
+    $("fix").hidden = !fix;
+    if (fix) { $("fixwhy").textContent = fix[0]; $("fixcmd").textContent = fix[1]; }
+  });
+  document.addEventListener("pi-settings", () => { $("btnn").textContent = $("button").value; });
+})();
+</script>
+</body>
+</html>
