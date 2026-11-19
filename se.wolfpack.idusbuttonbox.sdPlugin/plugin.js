@@ -1,4 +1,4 @@
-// Idus Button Box · v1.0 · build 2026-11-19
+// Idus Button Box · v1.0.1 · build 2026-11-19
 // Stream Deck keys as joystick buttons: the plugin creates a virtual joystick, "Idus Button Box",
 // with 32 buttons, and each key presses one of them. Games see an ordinary joystick — under
 // Wine/Proton too — so you bind the keys in Star Citizen, DCS, Elite … like any button box, with no
@@ -7,8 +7,8 @@
 // Zero npm dependencies.
 "use strict";
 
-const APP_VERSION = "1.0";
-const BUILD = "2026-11-19.3"; // shown in the settings panel and the OpenDeck log — tells which copy runs
+const APP_VERSION = "1.0.1";
+const BUILD = "2026-11-19.4"; // shown in the settings panel and the OpenDeck log — tells which copy runs
 const sdk = require("./lib/sdk");
 const K = require("./lib/keys");
 const { joy, checks, REASONS, COUNT } = require("./lib/joystick");

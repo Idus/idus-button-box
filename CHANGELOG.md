@@ -2,6 +2,11 @@
 
 All notable changes to Idus Button Box. Format: [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.0.1] – 2026-11-19
+
+### Changed
+- New icon: an arcade joystick instead of a panel of buttons, so it no longer looks like Idus SC Deck's. The action list shows a joystick too (with signal arcs on JOY · Status).
+
 ## [1.0] – 2026-11-19
 
 ### Added

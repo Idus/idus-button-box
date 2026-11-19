@@ -15,9 +15,8 @@ const listIcon = (scale) => `<svg xmlns="http://www.w3.org/2000/svg" width="40" 
 fs.mkdirSync(path.join(P, "imgs/actions"), { recursive: true });
 fs.writeFileSync(path.join(P, "imgs/actions/button.svg"), listIcon(0.85));
 fs.writeFileSync(path.join(P, "imgs/category.svg"), listIcon(1));
-// Status action: the panel with its lamp lit and a pulse line instead of buttons
-const statusGlyph = `<rect x="4.5" y="9" width="31" height="22" rx="4.5"/><path d="M10 22 h5 l3 -6 l4 10 l3 -4 h5" stroke-width="2.2"/>` +
-  `<circle cx="29.5" cy="14" r="2.4" fill="#ff9a3c" stroke="none"/>`;
+// Status action: the joystick with two signal arcs
+const statusGlyph = require("./icon-glyph.cjs").status("#ff9a3c");
 fs.writeFileSync(path.join(P, "imgs/actions/status.svg"), `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
   `<rect width="40" height="40" fill="#262b36"/><g transform="translate(20 20) scale(0.85) translate(-20 -20)" stroke="#ff9a3c" stroke-width="2.6">${statusGlyph}</g></svg>`);
 const statusSvg = Buffer.from(K.status({ state: "starting" }).split(",")[1], "base64").toString();
@@ -27,26 +26,12 @@ fs.writeFileSync(path.join(P, "imgs/status.svg"), statusSvg);
 const keySvg = Buffer.from(K.key({ n: 0, lamp: "idle" }).split(",")[1], "base64").toString();
 fs.writeFileSync(path.join(P, "imgs/key.svg"), keySvg);
 
-// The button box in the middle of the app icon: a panel with six arcade buttons, one pressed
-function box() {
-  const C = K.C;
-  const btn = (x, y, down) => down
-    ? `<circle cx="${x}" cy="${y}" r="26" fill="${C.accent}" opacity="0.18"/><circle cx="${x}" cy="${y + 2}" r="19" fill="${C.accent}"/><ellipse cx="${x}" cy="${y - 3}" rx="10" ry="4.5" fill="${C.title}" opacity="0.4"/>`
-    : `<circle cx="${x}" cy="${y + 4}" r="20" fill="${C.deep}" stroke="${C.dim}" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="20" fill="${C.surface}" stroke="${C.soft}" stroke-width="2.4"/><ellipse cx="${x}" cy="${y - 7}" rx="10" ry="4.5" fill="${C.soft}" opacity="0.16"/>`;
-  let s = `<rect x="-118" y="-78" width="236" height="156" rx="20" fill="#0f1115" stroke="#3a4352" stroke-width="3"/>` +
-    `<rect x="-110" y="-70" width="220" height="140" rx="14" fill="none" stroke="#2a2f3a" stroke-width="1.5"/>`;
-  for (const [x, y] of [[-100, -60], [100, -60], [-100, 60], [100, 60]]) s += `<circle cx="${x}" cy="${y}" r="3.2" fill="#3a4352"/>`;
-  const cols = [-64, 0, 64], rows = [-26, 30];
-  rows.forEach((y, r) => cols.forEach((x, c) => { s += btn(x, y, r === 1 && c === 2); }));
-  s += `<rect x="-92" y="-62" width="36" height="16" rx="5" fill="${C.surface}" stroke="${C.accent}" stroke-width="1.3"/>` +
-    `<text x="-74" y="-50.5" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" font-size="9.5" letter-spacing="0.8" fill="${C.accent}">JOY</text>` +
-    `<circle cx="92" cy="-54" r="4.5" fill="${C.ok}"/><circle cx="92" cy="-54" r="8" fill="${C.ok}" opacity="0.18"/>`;
-  return s;
-}
+// The middle of the app icon: an arcade joystick with two buttons on its base
+const stick = require("./icon-stick.cjs");
 
 // Plugin / app icon in the style of the other Idus app icons (GitHub Updater, SC Toolbox, Hamster
 // Wheel): glossy rounded frame, dark teal glow, faint reticle and code lines, a teal haze at the
-// bottom, orange IDUS on top and the name below — here with a button box in the middle.
+// bottom, orange IDUS on top and the name below — here with an arcade joystick in the middle.
 const CODE_L = ["js1_button12", "press(12)", "BTN_TRIGGER", "  hold();", "release(12)"];
 const CODE_R = ["// no keys", "uinput.create()", "  32 buttons", "tap(90 ms)", "{ JOY }"];
 const big = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
@@ -76,7 +61,7 @@ const big = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" vi
     ${CODE_R.map((t, i) => `<text x="474" y="${392 + i * 18}" text-anchor="end">${t}</text>`).join("")}
   </g>
   <circle cx="256" cy="282" r="170" fill="url(#glow)"/>
-  <g transform="translate(256 286) scale(1.18)">${box()}</g>
+  <g transform="translate(256 290) scale(1.06)">${stick("bb")}</g>
   <text x="256" y="120" text-anchor="middle" font-family="Saira" font-weight="700" font-size="96" letter-spacing="3" fill="#ff9a3c" filter="url(#txt)">IDUS</text>
   <text x="256" y="458" text-anchor="middle" font-family="IBM Plex Sans" font-weight="700" font-size="54" fill="#ff9a3c" filter="url(#txt)">Button box</text>
 </g>
