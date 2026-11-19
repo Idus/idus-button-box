@@ -1,8 +1,11 @@
 // Key images for Idus Button Box, in the Idus look: the same card, orange tab and status lamp as
 // the Idus SC Deck and Hamster Wheel keys. 144 × 144 SVG.
 //   head  — orange JOY tab, the button number beside it, the lamp (green: the joystick is ready)
-//   body  — your label (auto-sized, one or two lines), or a round button cap when there is none
+//   body  — your picture (with the label as a small caption), your label (auto-sized, one or two
+//           lines), or a round button cap when there is neither
 //   down  — while the button is held: orange frame, lighter card, orange label / pressed cap
+// status() draws the JOY · Status key: READY, the buttons held right now, the last press — or why
+// there is no joystick.
 "use strict";
 
 const C = {
@@ -17,7 +20,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const n = (x) => Number(x.toFixed(1));
 
 // Card, orange tab, the text beside it and the status lamp — as on the other Idus keys
-function head({ tab = "JOY", label = "", labelColor = C.title, lamp = "idle", down = false, frame }) {
+function head({ tab = "JOY", label = "", labelColor = C.title, lamp = "idle", down = false, frame, mark = "" }) {
   const w = tab.length * 7.3 + 14;
   const lamps = {
     ok: `<circle cx="128" cy="25.5" r="8.5" fill="${C.ok}" opacity="0.18"/><circle cx="128" cy="25.5" r="5" fill="${C.ok}"/>`,
@@ -31,6 +34,7 @@ function head({ tab = "JOY", label = "", labelColor = C.title, lamp = "idle", do
     `<rect x="13" y="15" width="${n(w)}" height="21" rx="6" fill="${down ? C.accent : C.surface}" stroke="${C.accent}" stroke-width="1.3"/>` +
     `<text x="${n(13 + w / 2)}" y="29.5" text-anchor="middle" font-family="${MONO}" font-weight="700" font-size="11" letter-spacing="0.8" fill="${down ? C.bg : C.accent}">${esc(tab)}</text>` +
     `<text x="${n(13 + w + 6)}" y="33" font-family="${MONO}" font-weight="700" font-size="20" fill="${labelColor}">${esc(label)}</text>` +
+    (mark ? `<text x="115" y="30" text-anchor="end" font-family="${MONO}" font-weight="700" font-size="9.5" letter-spacing="0.8" fill="${C.dim}">${esc(mark)}</text>` : "") +
     (lamps[lamp] || lamps.idle);
 }
 
@@ -51,7 +55,7 @@ function lines(text) {
 }
 
 // Width of a line in em for Saira 700 (capitals and digits are wide, small letters narrower)
-const em = (l) => [...l].reduce((w, ch) => w + (ch === " " ? 0.25 : /[MW]/.test(ch) ? 0.84 : /[ijlI.,:;|!'1]/.test(ch) ? 0.3 : /[A-Z]/.test(ch) ? 0.64 : /[0-9]/.test(ch) ? 0.58 : /[mw]/.test(ch) ? 0.84 : 0.54), 0);
+const em = (l) => [...l].reduce((w, ch) => w + (ch === " " ? 0.25 : /[MW]/.test(ch) ? 0.84 : /[ijlI.,:;|!']/.test(ch) ? 0.3 : /[A-Z]/.test(ch) ? 0.64 : /[0-9]/.test(ch) ? 0.62 : /[mw]/.test(ch) ? 0.84 : 0.54), 0);
 // Font size that fits the widest line into the card
 function fit(ls) {
   const widest = Math.max(...ls.map(em), 0.5);
@@ -81,15 +85,57 @@ function cap(down) {
 }
 
 const url = (body) => "data:image/svg+xml;base64," +
-  Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">${body}</svg>`).toString("base64");
+  Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="144" height="144" viewBox="0 0 144 144">${body}</svg>`).toString("base64");
 
-// n: button number · text: the label (empty → button cap) · down: held · lamp: ok | warn | error | idle
-// mode: "tap" adds a small TAP mark under the label
-function key({ n: num, text = "", down = false, lamp = "idle", mode = "hold" }) {
-  const body = String(text).trim() ? label(text, down) : cap(down);
-  const tapMark = mode === "tap"
-    ? `<text x="72" y="131" text-anchor="middle" font-family="${MONO}" font-weight="600" font-size="9.5" letter-spacing="1.2" fill="${C.dim}">TAP</text>` : "";
-  return url(head({ label: num ? String(num) : "–", labelColor: down ? C.accent : C.title, lamp, down }) + body + tapMark);
+// Only small raster pictures made by the settings panel (PNG/JPEG data URLs) are drawn
+const PICTURE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+const okPicture = (img) => typeof img === "string" && img.length < 400000 && PICTURE.test(img);
+
+// Your picture in the middle; the label, if any, as a one-line caption under it
+function picture(img, text, down) {
+  const cap1 = String(text || "").replace(/\s*(?:\||\\n|\n)\s*/g, " ").trim();
+  const h = cap1 ? 72 : 86;
+  let s = `<image x="20" y="42" width="104" height="${h}" preserveAspectRatio="xMidYMid meet" href="${img}" xlink:href="${img}"/>`;
+  if (cap1) {
+    const size = Math.max(9, Math.min(15, 112 / Math.max(em(cap1), 0.5)));
+    s += `<text x="72" y="131" text-anchor="middle" font-family="${DISPLAY}" font-weight="700" font-size="${n(size)}" fill="${down ? C.accent : C.fg}">${esc(cap1)}</text>`;
+  }
+  return s;
+}
+
+// n: button number · text: the label · image: a picture (data URL) · down: held
+// lamp: ok | warn | error | idle · mode: "tap" shows a small TAP mark beside the lamp
+function key({ n: num, text = "", image = "", down = false, lamp = "idle", mode = "hold" }) {
+  const body = okPicture(image) ? picture(image, text, down) : String(text).trim() ? label(text, down) : cap(down);
+  return url(head({ label: num ? String(num) : "–", labelColor: down ? C.accent : C.title, lamp, down, mark: mode === "tap" ? "TAP" : "" }) + body);
+}
+
+// The status key. state: ready | starting | error · held: buttons down now · last: last button
+// pressed (0: none yet) · reason: why there is no joystick
+function status({ state, held = [], last = 0, reason = "" }) {
+  const lamp = state === "ready" ? "ok" : state === "error" ? "error" : "warn";
+  const big = (t, color, size, y = 86) =>
+    `<text x="72" y="${y}" text-anchor="middle" font-family="${DISPLAY}" font-weight="700" font-size="${n(size)}" letter-spacing="0.5" fill="${color}">${esc(t)}</text>`;
+  const small = (t, y, color = C.muted) =>
+    `<text x="72" y="${y}" text-anchor="middle" font-family="${MONO}" font-weight="600" font-size="11" fill="${color}">${esc(t)}</text>`;
+  let body;
+  if (state === "error") {
+    const words = String(reason || "no joystick").split(" "), ls = [];
+    for (const w of words) {
+      const l = ls[ls.length - 1];
+      if (l && (l + " " + w).length <= 17) ls[ls.length - 1] = l + " " + w; else ls.push(w);
+    }
+    body = big("NO JOY", C.error, 28, 74) + ls.slice(0, 2).map((l, i) => small(l, 96 + i * 14, C.fg)).join("") + small("press: try again", 130);
+  } else if (state !== "ready") {
+    body = big("STARTING", C.warn, 22) + small("one moment", 108);
+  } else if (held.length) {
+    const t = held.slice(0, 3).join(" ") + (held.length > 3 ? " …" : "");
+    body = big(t, C.accent, Math.min(40, 108 / Math.max(em(t) + 0.02 * t.length, 0.5)), 90) + small(held.length > 1 ? "buttons held" : "button held", 118, C.title);
+  } else {
+    body = big("READY", C.ok, 30) + small(last ? `last: button ${last}` : "32 buttons", 112);
+  }
+  return url(head({ label: "BOX", labelColor: state === "error" ? C.error : state === "ready" ? C.title : C.warn, lamp, down: held.length > 0,
+    frame: state === "error" ? C.error : undefined }) + body);
 }
 
 // A problem, shown for a few seconds: big title, the reason (wrapped) and a muted sub line
@@ -107,4 +153,4 @@ function problem({ title, reason, sub, num }) {
     body + (sub ? `<text x="72" y="130" text-anchor="middle" font-family="${MONO}" font-weight="500" font-size="10.5" fill="${C.muted}">${esc(sub)}</text>` : ""));
 }
 
-module.exports = { key, problem, cap, lines, C };
+module.exports = { key, status, problem, cap, lines, okPicture, C };

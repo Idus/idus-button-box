@@ -2,13 +2,15 @@
 
 Stream Deck keys as **joystick buttons**, for **[OpenDeck](https://github.com/nekename/OpenDeck)** on Linux. The plugin makes a virtual joystick, **"Idus Button Box"**, with 32 buttons, and each key presses one of them. Games see an ordinary joystick — under Wine/Proton too — so you bind the keys in Star Citizen, DCS, Elite and other games like any button box, with no keyboard shortcuts in the way.
 
-![Keys: a round button when there is no label, your label otherwise; orange while held; a red key when the joystick is missing](docs/keys.png)
+![Keys: a round button when there is no label, your label or picture otherwise; orange while held; the status key; a red key when the joystick is missing](docs/keys.png)
 
 ## What it does
 
 - **One key, one joystick button** (1–32). New keys get the lowest free number; change it in the settings.
 - **Hold or tap.** Hold: the button is down while you hold the key — the game's own tap, hold and double-tap bindings work as usual. Tap: a short press however long you hold.
 - **Your label on the key**, auto-sized, one or two lines (`|` starts the second line). No label: a round arcade button.
+- **Your own picture** in the middle of the key (PNG, JPG or SVG) — the JOY tab, number and lamp stay, the label becomes a caption under it.
+- **A status key, JOY · Status:** READY, the buttons held right now and the last press — or why there is no joystick (press it to try again). Its settings list the numbers your keys use.
 - **You can see it work.** The key turns orange while its button is down; the green lamp means the joystick is ready.
 - **No keyboard in the way.** No clashes with keyboard bindings, no modifier keys, no keyboard-layout trouble.
 - **Leaves nothing behind.** The joystick exists while OpenDeck runs and is removed when it stops. No services, no system changes, no admin rights.
@@ -22,6 +24,11 @@ Stream Deck keys as **joystick buttons**, for **[OpenDeck](https://github.com/ne
 | **Joystick button** | 1 – 32 (numbers other keys use are marked) | the lowest free number |
 | **When you press the key** | **Hold** — down while you hold the key · **Tap** — a short press (90 ms) | Hold |
 | **Label on the key** | any text, up to 32 characters; `|` for a second line | empty (round button) |
+| **Picture** | an image file — scaled to 144 px and kept in the key, so the file may move | none |
+
+The **JOY · Status** key has no settings of its own; its panel shows the joystick, the last press and the numbers in use.
+
+![The status key's settings panel](docs/status-settings.png)
 
 **Test this button** in the settings panel presses the button for half a second. Two keys may share a number on purpose; the button stays down until both are let go. In a multi action a key always taps. A key held for more than a minute is let go, so a lost key-up never leaves a button stuck.
 

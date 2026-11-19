@@ -14,6 +14,10 @@ const cells = [
   ["With a label", K.key({ n: 12, text: "GEAR", lamp: "ok" })],
   ["…held", K.key({ n: 12, text: "GEAR", lamp: "ok", down: true })],
   ["Two lines, tap", K.key({ n: 5, text: "QUANTUM|DRIVE", lamp: "ok", mode: "tap" })],
+  ["Your picture", K.key({ n: 9, text: "BUTTON BOX", lamp: "ok", image: "data:image/png;base64," +
+    fs.readFileSync(path.join(__dirname, "..", "se.wolfpack.idusbuttonbox.sdPlugin", "imgs", "plugin.png")).toString("base64") })],
+  ["Status key", K.status({ state: "ready", last: 12 })],
+  ["Status, held", K.status({ state: "ready", held: [12] })],
   ["No joystick", K.problem({ title: "NO JOYSTICK", reason: "no access to /dev/uinput", sub: "see the settings", num: 7 })],
 ];
 (async () => {

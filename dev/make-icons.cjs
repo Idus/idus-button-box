@@ -15,6 +15,13 @@ const listIcon = (scale) => `<svg xmlns="http://www.w3.org/2000/svg" width="40" 
 fs.mkdirSync(path.join(P, "imgs/actions"), { recursive: true });
 fs.writeFileSync(path.join(P, "imgs/actions/button.svg"), listIcon(0.85));
 fs.writeFileSync(path.join(P, "imgs/category.svg"), listIcon(1));
+// Status action: the panel with its lamp lit and a pulse line instead of buttons
+const statusGlyph = `<rect x="4.5" y="9" width="31" height="22" rx="4.5"/><path d="M10 22 h5 l3 -6 l4 10 l3 -4 h5" stroke-width="2.2"/>` +
+  `<circle cx="29.5" cy="14" r="2.4" fill="#ff9a3c" stroke="none"/>`;
+fs.writeFileSync(path.join(P, "imgs/actions/status.svg"), `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
+  `<rect width="40" height="40" fill="#262b36"/><g transform="translate(20 20) scale(0.85) translate(-20 -20)" stroke="#ff9a3c" stroke-width="2.6">${statusGlyph}</g></svg>`);
+const statusSvg = Buffer.from(K.status({ state: "starting" }).split(",")[1], "base64").toString();
+fs.writeFileSync(path.join(P, "imgs/status.svg"), statusSvg);
 
 // Default key image (shown for a moment before the plugin draws): the round button
 const keySvg = Buffer.from(K.key({ n: 0, lamp: "idle" }).split(",")[1], "base64").toString();
@@ -93,6 +100,8 @@ fs.writeFileSync(path.join(ROOT, "idus-button-box.svg"), big);
   await shot(big, 512, path.join(P, "imgs/plugin@2x.png"));
   await shot(keySvg, 72, path.join(P, "imgs/key.png"));
   await shot(keySvg, 144, path.join(P, "imgs/key@2x.png"));
+  await shot(statusSvg, 72, path.join(P, "imgs/status.png"));
+  await shot(statusSvg, 144, path.join(P, "imgs/status@2x.png"));
   await browser.close();
   console.log("icons done");
 })();

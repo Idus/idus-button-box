@@ -13,6 +13,7 @@ const path = require("node:path");
 const PLUGIN = path.resolve(process.env.FAKE_PLUGIN_DIR || path.join(__dirname, "..", "se.wolfpack.idusbuttonbox.sdPlugin"));
 const ID = "se.wolfpack.idusbuttonbox";
 const ACTION = `${ID}.button`;
+const STATUS = `${ID}.status`;
 const out = path.resolve(process.argv[2] || "out");
 const seconds = Number(process.argv[3] || 9);
 fs.rmSync(out, { recursive: true, force: true });
@@ -24,7 +25,11 @@ const keys = {
   k2: {},                                              // new key: gets the lowest free number
   k3: { button: "5", mode: "tap", label: "QUANTUM|DRIVE" },
   k4: { button: "12", label: "" },                     // shares 12 with k1, round cap
+  k5: { button: "9", label: "HAMSTER", image: "data:image/png;base64," +
+    fs.readFileSync(path.join(__dirname, "..", "se.wolfpack.idusbuttonbox.sdPlugin", "imgs", "key@2x.png")).toString("base64") },
+  s1: {},                                              // a JOY · Status key
 };
+const actionOf = (ctx) => (ctx.startsWith("s") ? STATUS : ACTION);
 const stored = { assigned: { gone1: 1, gone2: 2 } };  // two keys on another page use 1 and 2
 const latest = {}, log = [], counts = {};
 const t0 = Date.now();
@@ -34,7 +39,7 @@ const wss = new WebSocketServer({ port });
 wss.on("connection", (ws) => {
   const send = (o) => ws.send(JSON.stringify(o));
   const at = (ms, what, fn) => setTimeout(() => { log.push(`${ts()} ${what}`); fn(); }, ms);
-  const ev = (event, ctx, extra = {}) => send({ event, action: ACTION, context: ctx, device: "dev",
+  const ev = (event, ctx, extra = {}) => send({ event, action: actionOf(ctx), context: ctx, device: "dev",
     payload: { settings: keys[ctx], coordinates: { column: 0, row: 0 }, isInMultiAction: false, ...extra } });
   const snap = (tag) => { for (const [k, svg] of Object.entries(latest)) fs.writeFileSync(path.join(out, `${tag}-${k}.svg`), svg); };
   ws.on("message", (buf) => {
@@ -45,11 +50,14 @@ wss.on("connection", (ws) => {
       at(800, "PI open on k2 → info", () => send({ event: "sendToPlugin", action: ACTION, context: "k2", payload: { cmd: "info" } }));
       at(1000, "k1 DOWN (hold 12)", () => ev("keyDown", "k1"));
       at(1300, "snapshot k1 held", () => snap("t1-held"));
+      at(1350, "PI open on s1 (status) → info", () => send({ event: "sendToPlugin", action: STATUS, context: "s1", payload: { cmd: "info" } }));
+      at(1400, "s1 pressed (status: ready → showOk)", () => { ev("keyDown", "s1"); ev("keyUp", "s1"); });
       at(1600, "k1 UP", () => ev("keyUp", "k1"));
       at(1900, "k3 DOWN+UP (tap 5)", () => { ev("keyDown", "k3"); setTimeout(() => ev("keyUp", "k3"), 400); });
       at(1960, "snapshot k3 tapping", () => snap("t2-tap"));
       at(2700, "k1 DOWN, k4 DOWN (both 12)", () => { ev("keyDown", "k1"); ev("keyDown", "k4"); });
       at(2900, "k1 UP (12 stays: k4 holds it)", () => ev("keyUp", "k1"));
+      at(2950, "snapshot two held", () => snap("t2b-two"));
       at(3200, "k4 UP (12 released)", () => ev("keyUp", "k4"));
       at(3500, "k1 in a multi action (forced tap)", () => { ev("keyDown", "k1", { isInMultiAction: true }); ev("keyUp", "k1", { isInMultiAction: true }); });
       at(3900, "PI test on k2", () => send({ event: "sendToPlugin", action: ACTION, context: "k2", payload: { cmd: "test" } }));

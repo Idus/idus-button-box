@@ -12,16 +12,17 @@
   <section class="about">
     <span class="eyebrow" id="eyebrow">Idus Button Box · v1.0</span>
     <div class="titlerow"><span class="tab">JOY</span><h1>Button Box</h1></div>
-    <p class="lede">This key presses a button on a virtual joystick, <b>Idus Button Box</b>. Bind it in the game like any joystick button — no keyboard shortcuts in the way.</p>
+    <p class="lede only-button">This key presses a button on a virtual joystick, <b>Idus Button Box</b>. Bind it in the game like any joystick button — no keyboard shortcuts in the way.</p>
+    <p class="lede only-status">This key shows the virtual joystick <b>Idus Button Box</b>: READY, the buttons held right now and the last press. When there is no joystick it says why — press it to try again.</p>
     <div class="btnrow statusrow">
       <span class="pill" id="state">○ Starting…</span>
-      <button class="btn" type="button" id="test">Test this button</button>
+      <button class="btn only-button" type="button" id="test">Test this button</button>
     </div>
     <p class="hint" id="testmsg" aria-live="polite"></p>
   </section>
 
   <div class="settings">
-    <section class="group">
+    <section class="group only-button">
       <div class="head">Button</div>
       <label>Joystick button
         <select data-setting="button" id="button">
@@ -37,8 +38,8 @@
       </label>
       <label>When you press the key
         <select data-setting="mode" data-default="hold">
-          <option value="hold">Hold — the button is down while you hold the key</option>
-          <option value="tap">Tap — a short press, however long you hold</option>
+          <option value="hold">Hold — down while you hold the key</option>
+          <option value="tap">Tap — a short press</option>
         </select>
       </label>
       <label class="label-in">Label on the key
@@ -47,9 +48,30 @@
       <p class="hint">Empty: a round button. <code>|</code> starts a second line.</p>
     </section>
 
+    <section class="group only-button">
+      <div class="head">Picture</div>
+      <div class="picrow">
+        <div class="picprev" id="picprev">none</div>
+        <div class="btnrow vert">
+          <button class="btn" type="button" id="picpick">Choose image…</button>
+          <button class="btn" type="button" id="picclear">Remove</button>
+        </div>
+      </div>
+      <input type="file" id="picfile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.png,.jpg,.jpeg,.webp,.gif,.svg" hidden>
+      <input type="hidden" data-setting="image">
+      <p class="hint" id="pichint">PNG, JPG or SVG in the middle of the key; JOY tab, number and lamp stay, the label becomes a caption under it. Kept in the key (144 px), so the file may move.</p>
+    </section>
+
+    <section class="group only-status">
+      <div class="head">Buttons in use</div>
+      <div class="inuse" id="inuse"></div>
+      <p class="hint">Numbers your JOY keys use, also on other pages. Orange frame: more than one key.</p>
+    </section>
+
     <section class="group">
       <div class="head">In the game</div>
-      <div class="tip">Open the game's key bindings, pick the action and <b>press this key</b>. Star Citizen shows it as <code>js<span id="jsn">N</span>_button<span id="btnn">1</span></code>. Start OpenDeck <b>before</b> the game, so the joystick is there when the game looks.</div>
+      <div class="tip only-button">Open the game's key bindings, pick the action and <b>press this key</b>. Star Citizen shows it as <code>js<span id="jsn">N</span>_button<span id="btnn">1</span></code>. Start OpenDeck <b>before</b> the game, so the joystick is there when the game looks.</div>
+      <div class="tip only-status">Start OpenDeck <b>before</b> the game, so the joystick is there when the game looks. Games list it as <b>Idus Button Box</b>.</div>
       <div class="checks" id="checks"></div>
     </section>
   </div>
@@ -95,11 +117,46 @@
   });
   $("retry").addEventListener("click", () => PI.send({ cmd: "retry" }));
 
+  // Picture: read the file here, scale it to fit 144 px and keep it in the key's settings
+  const picIn = document.querySelector('input[data-setting="image"]');
+  function preview() {
+    const v = picIn.value;
+    $("picprev").innerHTML = v ? '<img alt="" src="' + v + '">' : "none";
+  }
+  function setPicture(v) { picIn.value = v; picIn.dispatchEvent(new Event("change")); preview(); }
+  $("picpick").addEventListener("click", () => $("picfile").click());
+  $("picclear").addEventListener("click", () => setPicture(""));
+  $("picfile").addEventListener("change", () => {
+    const f = $("picfile").files && $("picfile").files[0];
+    $("picfile").value = "";
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const S = 144, w0 = img.naturalWidth || S, h0 = img.naturalHeight || S, k = S / Math.max(w0, h0);
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(w0 * k)); c.height = Math.max(1, Math.round(h0 * k));
+        const g = c.getContext("2d");
+        g.imageSmoothingQuality = "high";
+        g.drawImage(img, 0, 0, c.width, c.height);
+        let url = c.toDataURL("image/png");
+        if (url.length > 300000) url = c.toDataURL("image/jpeg", 0.88);
+        setPicture(url);
+        $("pichint").className = "hint ok"; $("pichint").textContent = "✓ " + f.name + " — on the key now.";
+      };
+      img.onerror = () => { $("pichint").className = "hint error"; $("pichint").textContent = "✗ Could not read " + f.name + " as an image."; };
+      img.src = r.result;
+    };
+    r.readAsDataURL(f);
+  });
+  document.addEventListener("pi-settings", preview);
+
   // Mark numbers other keys use (two keys may share one on purpose)
   function marks(used) {
     for (const o of $("button").options) {
       const c = used && used[o.value];
-      o.textContent = "Button " + o.value + (c ? (c > 1 ? " · also on " + c + " other keys" : " · also on another key") : "");
+      o.textContent = "Button " + o.value + (c ? " · used" + (c > 1 ? " ×" + c : "") : "");
     }
   }
 
@@ -108,6 +165,10 @@
     if (i.version) $("eyebrow").textContent = "Idus Button Box · v" + i.version + (i.build ? " · build " + i.build : "");
     if (i.button && String(PI.settings.button || "") === "") $("button").value = String(i.button);
     marks(i.used);
+    if (i.usedAll) {
+      const nums = Object.keys(i.usedAll).map(Number).sort((a, b) => a - b);
+      $("inuse").innerHTML = nums.length ? nums.map((n) => `<span class="${i.usedAll[n] > 1 ? "many" : ""}" title="${i.usedAll[n]} key(s)">${n}</span>`).join("") : '<span class="hint">none yet</span>';
+    }
     $("btnn").textContent = $("button").value;
 
     const st = $("state");

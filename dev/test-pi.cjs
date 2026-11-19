@@ -16,6 +16,7 @@ const base = { type: "info", app: "Idus Button Box", version: "1.0", build: "tes
 const cases = {
   ready: { settings: { button: "12", mode: "hold", label: "GEAR" }, info: { ...base, button: 12, last: { n: 12, ago: 3000 } } },
   tap: { settings: { button: "5", mode: "tap", label: "QUANTUM|DRIVE" }, info: { ...base, button: 5, last: null } },
+  status: { action: "status", settings: {}, info: { ...base, key: "status", button: 0, usedAll: { 1: 1, 2: 1, 5: 1, 12: 2, 30: 1 }, last: { n: 12, ago: 5000 } } },
   noaccess: { settings: { button: "3" }, info: { ...base, button: 3, state: "error", kind: "access", text: "no access to /dev/uinput", uinput: "access", nodes: { sysname: "", event: "", js: "" }, last: null } },
 };
 
@@ -36,11 +37,24 @@ const cases = {
       page.on("pageerror", (e) => errors.push(e.message));
       await page.addInitScript(() => { window.__opened = []; window.open = (u) => { window.__opened.push(u); }; });
       await page.goto("file://" + PI);
-      await page.evaluate(([port, settings]) => window.connectSocket(port, "ctx", "registerPropertyInspector", "{}",
-        JSON.stringify({ action: "se.wolfpack.idusbuttonbox.button", context: "ctx", payload: { settings } })), [port, c.settings]);
+      await page.evaluate(([port, settings, action]) => window.connectSocket(port, "ctx", "registerPropertyInspector", "{}",
+        JSON.stringify({ action: "se.wolfpack.idusbuttonbox." + action, context: "ctx", payload: { settings } })), [port, c.settings, c.action || "button"]);
       await page.waitForTimeout(500);
-      let saved = "", typed = "", test = "";
-      if (W === 1100) {
+      let saved = "", typed = "", test = "", pic = "";
+      const visibleGroups = await page.evaluate(() => [...document.querySelectorAll(".group .head")].filter((e) => e.offsetParent).map((e) => e.textContent));
+      if (W === 1100 && name === "ready") {
+        await page.setInputFiles("#picfile", path.join(__dirname, "..", "idus-button-box.png"));
+        await page.waitForTimeout(800);
+        const set = got.filter((m) => m.event === "setSettings").pop();
+        const img = set && set.payload.image || "";
+        pic = `${img.slice(0, 22)}… ${img.length} chars, preview=${await page.isVisible("#picprev img")}, hint=${await page.textContent("#pichint")}`;
+        await page.screenshot({ path: path.join(out, "picture-1100.png"), fullPage: true });
+        await page.click("#picclear");
+        await page.waitForTimeout(150);
+        const set2 = got.filter((m) => m.event === "setSettings").pop();
+        pic += ` · after Remove: image="${set2.payload.image}"`;
+      }
+      if (W === 1100 && name !== "status") {
         await page.selectOption('select[data-setting="button"]', "7");
         await page.waitForTimeout(150);
         let set = got.filter((m) => m.event === "setSettings").pop();
@@ -62,7 +76,8 @@ const cases = {
       await page.screenshot({ path: path.join(out, `${name}-${W}.png`), fullPage: true });
       await page.click("footer a[href*='github']");
       const opened = await page.evaluate(() => window.__opened);
-      console.log(JSON.stringify({ name, W, scroll, saved, typed, test, opt12, opened, pill: await page.textContent("#state"), fix: await page.isVisible("#fix"), errors }));
+      const inuse = await page.textContent("#inuse");
+      console.log(JSON.stringify({ name, W, scroll, visibleGroups, saved, typed, test, pic, inuse, opt12, opened, pill: await page.textContent("#state"), fix: await page.isVisible("#fix"), errors }));
       await page.close(); wss.close();
     }
   }

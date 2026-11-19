@@ -43,6 +43,8 @@
   function start(port, uuid, registerEvent, _info, actionInfo) {
     const a = typeof actionInfo === "string" ? JSON.parse(actionInfo) : actionInfo;
     context = ELG ? uuid : a.context; action = a.action;
+    // Which key type this panel is for (button | status) — pages show or hide parts with it
+    document.documentElement.dataset.action = String(action || "").split(".").pop();
     settings = (a.payload && a.payload.settings) || {};
     fill();
     socket = new WebSocket("ws://127.0.0.1:" + port);
@@ -61,6 +63,7 @@
     send(payload) { if (socket && socket.readyState === 1) socket.send(JSON.stringify({ event: "sendToPlugin", context, action, payload })); },
     onInfo(fn) { infoFns.push(fn); },
     get settings() { return settings; },
+    get action() { return action; },
   };
   window.connectElgatoStreamDeckSocket = start;
   window.connectSocket = start;

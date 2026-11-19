@@ -9,7 +9,7 @@ const manifest = {
   UUID: ID,
   Version: VERSION,
   Author: "Idus",
-  Description: "Stream Deck keys as joystick buttons: the plugin makes a virtual joystick, \"Idus Button Box\", with 32 buttons, and each key presses one of them — hold or tap. Games see an ordinary joystick, under Wine/Proton too, so you bind the keys in Star Citizen, DCS, Elite and other games like any button box, with no keyboard shortcuts in the way. Your own label on each key. Linux (Wayland and X11). Made by Idus with AI assistance (Claude).",
+  Description: "Stream Deck keys as joystick buttons: the plugin makes a virtual joystick, \"Idus Button Box\", with 32 buttons, and each key presses one of them — hold or tap. Games see an ordinary joystick, under Wine/Proton too, so you bind the keys in Star Citizen, DCS, Elite and other games like any button box, with no keyboard shortcuts in the way. Your own label or picture on each key, and a status key. Linux (Wayland and X11). Made by Idus with AI assistance (Claude).",
   URL: "https://github.com/Idus/idus-button-box",
   Icon: "imgs/plugin",
   Category: "Idus Button Box",
@@ -29,6 +29,16 @@ const manifest = {
     DisableAutomaticStates: true,
     PropertyInspectorPath: "pi/button.html",
     States: [{ Image: "imgs/key", ShowTitle: false }],
+  }, {
+    Name: "JOY · Status",
+    UUID: `${ID}.status`,
+    Icon: "imgs/actions/status",
+    Tooltip: "Shows the virtual joystick \"Idus Button Box\": ready, the buttons held right now and the last press — or why there is no joystick (press to try again).",
+    Controllers: ["Keypad"],
+    SupportedInMultiActions: false,
+    DisableAutomaticStates: true,
+    PropertyInspectorPath: "pi/button.html",
+    States: [{ Image: "imgs/status", ShowTitle: false }],
   }],
 };
 fs.writeFileSync(path.join(__dirname, "..", `${ID}.sdPlugin`, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
