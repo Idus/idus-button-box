@@ -33,7 +33,10 @@ EV_SYN, EV_KEY, EV_ABS = 0x00, 0x01, 0x03
 SYN_REPORT, ABS_X, ABS_Y = 0, 0x00, 0x01
 BUTTONS = list(range(0x120, 0x130)) + list(range(0x2C0, 0x2D0))  # BTN_TRIGGER..BTN_DEAD, BTN_TRIGGER_HAPPY1..16
 BUS_VIRTUAL = 0x06
-VENDOR, PRODUCT, VERSION = 0x1209, 0x4242, 1
+# Wine (11.8 and newer) lists joysticks sorted by vendor ID, then product ID — the same order for every
+# game. FFFF sorts after every real vendor, so the button box is always the last joystick (your sticks
+# keep js1, js2 …), with or without OpenDeck running.
+VENDOR, PRODUCT, VERSION = 0xFFFF, 0x4242, 1
 NAME = b"Idus Button Box"
 DRY = os.environ.get("IDUS_BB_DRYRUN") == "1"
 
