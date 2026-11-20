@@ -2,14 +2,6 @@
 
 All notable changes to Idus Button Box. Format: [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.0.2] – 2026-11-20
-
-### Changed
-- **The button box is always the last joystick** in games under Wine 11.8 or newer: its vendor ID is
-  now `FFFF` (was `1209`). Wine lists joysticks sorted by vendor and product ID, so your sticks keep
-  js1, js2 … with or without OpenDeck running. With the old ID it would have been listed *first*.
-  Games see it as a new device once: bindings made with 1.0/1.0.1 must be bound again.
-
 ## [1.0.1] – 2026-11-19
 
 ### Changed

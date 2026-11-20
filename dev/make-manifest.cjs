@@ -2,7 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const ID = "se.wolfpack.idusbuttonbox";
-const VERSION = "1.0.2";
+const VERSION = "1.0.1";
 
 const manifest = {
   Name: "Idus Button Box",

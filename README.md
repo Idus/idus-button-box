@@ -38,7 +38,13 @@ The **JOY · Status** key has no settings of its own; its panel shows the joysti
 2. Open the game's key bindings, pick the action and **press the Stream Deck key**.
 3. Star Citizen shows it as `jsN_button12` — N is the number Star Citizen gives the Idus Button Box among your joysticks.
 
-**Your other joysticks stay first.** Games under Wine number joysticks in the order Wine lists them. From **Wine 11.8** that order is sorted by vendor and product ID — the same every time, for every game — and the button box has the highest possible vendor ID, so it is always the last one: your sticks keep js1, js2 …, with or without OpenDeck running. Check your Wine version (LUG Helper shows the runner; `wine --version` with that runner). With an older Wine the order can come out different: update the runner, or in Star Citizen move bindings that ended up on the wrong number with [Idus SC Toolbox](https://github.com/Idus/idus-sc-toolbox) 1.4 (🧭 Joystick numbers) or the console (`pp_resortdevices joystick 2 3`).
+**Your other joysticks:** Star Citizen numbers joysticks in the order it finds them at start — you cannot choose it — and the button box can land between your sticks: e.g. your left stick moves from js2 to js3 and its bindings stop working. Fix it once in the console (`§` on a Nordic keyboard, `` ` `` on US):
+
+```
+pp_resortdevices joystick 3 2
+```
+
+That moves the bindings, not the devices: every js2 binding becomes js3 and the other way round, so the stick's bindings follow it to js3. Star Citizen saves it in `actionmaps.xml`. From then on, **start OpenDeck before the game** (OpenDeck's autostart does that) — without the button box, the stick is js2 again for that session. [Idus SC Toolbox](https://github.com/Idus/idus-sc-toolbox) 1.4 warns before ▶ Launch when the button box is missing, and can move the bindings for you.
 
 To see the joystick outside a game: KDE System Settings → **Game Controller** lists "Idus Button Box" and lights its buttons when you press the keys.
 
@@ -86,7 +92,7 @@ A key presses one button, the same as a button on a real button box — no macro
 ## How it works
 
 - `plugin.js` — keys, numbers, hold and tap, drawing. Key numbers are kept on each key and in OpenDeck's global settings, so keys on other pages are not given the same number by mistake.
-- `lib/joy.py` — the virtual joystick, Python standard library only. Vendor ID `FFFF` (product `4242`): Wine 11.8 and newer lists joysticks sorted by vendor and product ID, so it comes after every real device. Buttons: buttons 1–16 are `BTN_TRIGGER`…`BTN_DEAD` and 17–32 are `BTN_TRIGGER_HAPPY1`–`16`, so button N is button N in every game. Two centred X/Y axes that never move make udev, SDL and Wine treat it as a joystick; it has no gamepad buttons, so Wine never cuts it down to a 14-button gamepad. It lets go of every button and removes the joystick as soon as the plugin stops.
+- `lib/joy.py` — the virtual joystick, Python standard library only: buttons 1–16 are `BTN_TRIGGER`…`BTN_DEAD` and 17–32 are `BTN_TRIGGER_HAPPY1`–`16`, so button N is button N in every game. Two centred X/Y axes that never move make udev, SDL and Wine treat it as a joystick; it has no gamepad buttons, so Wine never cuts it down to a 14-button gamepad. It lets go of every button and removes the joystick as soon as the plugin stops.
 - `lib/joystick.js` — starts the helper with the plugin and starts it again if it stops.
 - No network access, no telemetry, nothing written to disk.
 

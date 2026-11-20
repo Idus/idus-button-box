@@ -1,7 +1,7 @@
 {
   "Name": "Idus Button Box",
   "UUID": "se.wolfpack.idusbuttonbox",
-  "Version": "1.0.2",
+  "Version": "1.0.1",
   "Author": "Idus",
   "Description": "Stream Deck keys as joystick buttons: the plugin makes a virtual joystick, \"Idus Button Box\", with 32 buttons, and each key presses one of them — hold or tap. Games see an ordinary joystick, under Wine/Proton too, so you bind the keys in Star Citizen, DCS, Elite and other games like any button box, with no keyboard shortcuts in the way. Your own label or picture on each key, and a status key. Linux (Wayland and X11). Made by Idus with AI assistance (Claude).",
   "URL": "https://github.com/Idus/idus-button-box",

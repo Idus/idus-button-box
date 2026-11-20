@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Idus Button Box installer  ·  v1.0.2  ·  build 2026-11-20
+# Idus Button Box installer  ·  v1.0.1  ·  build 2026-11-19
 # Installs the Idus Button Box plugin into OpenDeck (native or Flatpak) for the current user.
 #   bash install-idus-button-box.sh             install / update
 #   bash install-idus-button-box.sh --uninstall remove the plugin (your key layout stays in OpenDeck)
