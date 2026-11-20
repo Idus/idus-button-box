@@ -38,7 +38,13 @@ The **JOY · Status** key has no settings of its own; its panel shows the joysti
 2. Open the game's key bindings, pick the action and **press the Stream Deck key**.
 3. Star Citizen shows it as `jsN_button12` — N is the number Star Citizen gives the Idus Button Box among your joysticks.
 
-**Your other joysticks:** games number joysticks in the order they find them. A new one can shift the numbers of your HOTAS (js1, js2 …) and with them its bindings. Check your stick bindings the first time you start a game with the button box.
+**Your other joysticks:** games number joysticks in the order they find them, and the button box can land between your sticks — e.g. your left stick moves from js2 to js3 and its bindings stop working. In Star Citizen, fix it once in the console (the `` ` `` key):
+
+```
+pp_resortdevices joystick 3 2
+```
+
+That moves the device on instance 3 (here: the stick) to 2, and the button box to 3. Star Citizen keeps the order until you reset its settings. Bindings you made with the button box before the swap pointed at js2 — bind those again (they become js3_buttonN). Check the order under Options → Keybindings → Advanced Controls Customization.
 
 To see the joystick outside a game: KDE System Settings → **Game Controller** lists "Idus Button Box" and lights its buttons when you press the keys.
 
